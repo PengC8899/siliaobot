@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Sensitive Data
+backend/sessions/*.session
+backend/data.db
+*.db
+*.sqlite3
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
+frontend/dist/

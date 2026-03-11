@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8005:8000"
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    restart: always
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3005:80"
+    depends_on:
+      - backend
+    restart: always
