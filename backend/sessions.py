@@ -6,6 +6,7 @@ from telethon import TelegramClient
 from telethon.sessions import StringSession
 from database import SESSION_DIR, execute, fetch_all, fetch_one, now_iso, get_db
 from pydantic import BaseModel
+import re
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -66,6 +67,47 @@ async def list_sessions():
     rows = await fetch_all("SELECT * FROM sessions ORDER BY id DESC")
     return {"items": rows}
 
+
+@router.get("/{session_id}/otp")
+async def get_session_otp(session_id: int):
+    session_row = await fetch_one("SELECT * FROM sessions WHERE id = ?", (session_id,))
+    if not session_row:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    client = TelegramClient(
+        StringSession(session_row["session_string"]) if session_row["session_string"] else os.path.join(SESSION_DIR, session_row["session_file"]),
+        session_row["api_id"],
+        session_row["api_hash"]
+    )
+    
+    try:
+        await client.connect()
+        if not await client.is_user_authorized():
+             return {"status": "error", "message": "Session invalid or not authorized"}
+        
+        # Get messages from Telegram Service Notifications (777000)
+        messages = await client.get_messages(777000, limit=1)
+        
+        if not messages:
+             return {"status": "error", "message": "No messages found from Telegram (777000)"}
+
+        latest_msg = messages[0]
+        text = latest_msg.message or ""
+        
+        # Regex for code: usually 5 digits, sometimes with dashes
+        match = re.search(r'\b(\d{5})\b', text)
+        code = match.group(1) if match else None
+        
+        return {
+            "status": "success",
+            "code": code,
+            "full_message": text,
+            "date": latest_msg.date.isoformat() if latest_msg.date else None
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    finally:
+        await client.disconnect()
 
 @router.post("/check/{session_id}")
 async def check_session_health(session_id: int):

@@ -10,7 +10,7 @@ import {
   SyncOutlined, FileTextOutlined, DeleteOutlined, PauseCircleOutlined
 } from '@ant-design/icons';
 import { 
-  getSessions, uploadSession, sendCode, login, checkSession,
+  getSessions, uploadSession, sendCode, login, checkSession, getSessionOtp,
   createTask, getTasks, getLogs, getWsUrl, getLogStats, getTaskTargets,
   stopTask, deleteTask, batchCheckSessions, batchDeleteSessions, updateProfile
 } from './api';
@@ -180,6 +180,32 @@ const SessionManager = () => {
     }
   };
 
+  const handleGetOtp = async (id) => {
+    try {
+      message.loading({ content: "正在获取验证码...", key: "otp", duration: 0 });
+      const res = await getSessionOtp(id);
+      if (res.status === 'success') {
+          message.success({ content: "获取成功", key: "otp" });
+          Modal.success({
+              title: "获取验证码成功",
+              content: (
+                  <div>
+                      <p>验证码: <b style={{ fontSize: 18, color: 'red' }}>{res.code || "未找到"}</b></p>
+                      <div style={{ maxHeight: 200, overflow: 'auto', background: '#f5f5f5', padding: 8 }}>
+                          {res.full_message}
+                      </div>
+                      <p style={{ marginTop: 8, fontSize: 12, color: '#999' }}>时间: {res.date}</p>
+                  </div>
+              )
+          });
+      } else {
+          message.error({ content: "获取失败: " + res.message, key: "otp" });
+      }
+    } catch (e) {
+      message.error({ content: "请求失败: " + e.message, key: "otp" });
+    }
+  };
+
   const handleBatchCheck = async () => {
     if (selectedRowKeys.length === 0) return message.warning("请选择账号");
     try {
@@ -268,7 +294,10 @@ const SessionManager = () => {
       title: "操作",
       key: "action",
       render: (_, record) => (
-        <Button size="small" icon={<SyncOutlined />} onClick={() => handleCheck(record.id)}>检查</Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+            <Button size="small" icon={<SyncOutlined />} onClick={() => handleCheck(record.id)}>检查</Button>
+            <Button size="small" onClick={() => handleGetOtp(record.id)}>取码</Button>
+        </div>
       )
     }
   ];

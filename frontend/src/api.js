@@ -37,8 +37,9 @@ export async function apiUpload(path, formData) {
   return res.json();
 }
 
-export const checkSession = (id) => apiPost(`/sessions/check/${id}`);
 export const getSessions = () => apiGet("/sessions");
+export const getSessionOtp = (id) => apiGet(`/sessions/${id}/otp`);
+export const checkSession = (id) => apiPost(`/sessions/check/${id}`);
 export const batchCheckSessions = (ids) => apiPost("/sessions/batch_check", { ids });
 export const batchDeleteSessions = (ids) => apiPost("/sessions/batch_delete", { ids });
 export const updateProfile = (formData) => {
